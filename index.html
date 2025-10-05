@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E.C.H.O. - Basic Uploader</title>
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel Compiler for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+        .primary-button {
+            background-color: #000;
+            color: #fff;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .primary-button:hover {
+            background-color: #333;
+        }
+        .primary-button:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const Uploader = () => {
+            const [videoFile, setVideoFile] = useState(null);
+            const [language, setLanguage] = useState('es');
+            const [subtitles, setSubtitles] = useState(true);
+            const [status, setStatus] = useState('Ready. Select a video to begin.');
+            const [isProcessing, setIsProcessing] = useState(false);
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    setVideoFile(file);
+                    setStatus(`Selected file: ${file.name}`);
+                }
+            };
+
+            const handleGenerate = async () => {
+                if (!videoFile) {
+                    setStatus("Error: Please select a video file first.");
+                    return;
+                }
+                setIsProcessing(true);
+                setStatus("Uploading video to the backend...");
+
+                const formData = new FormData();
+                formData.append('video', videoFile);
+                formData.append('language', language);
+                formData.append('subtitles', subtitles);
+                
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/process-video/', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('API Response:', result);
+                    setStatus(`✅ Success! Processing has started. Check your Python console for progress.`);
+                    // We don't navigate away in this simple version
+                } catch (error) {
+                    console.error("Error during upload:", error);
+                    setStatus(`❌ Error: ${error.message}. Make sure your Python server is running.`);
+                    setIsProcessing(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col justify-between">
+                     <header className="p-6 text-center">
+                        <h1 className="text-3xl font-bold">E.C.H.O. Video Processor</h1>
+                     </header>
+                     <main className="flex-grow flex items-center justify-center p-4">
+                         <div className="w-full max-w-2xl text-center">
+                            <label htmlFor="file-upload" className="w-full h-64 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors bg-white/50">
+                                <h2 className="text-xl font-semibold text-gray-700">{videoFile ? videoFile.name : 'Click to select a video file'}</h2>
+                                <p className="text-gray-500 mt-2">MP4, MOV, etc.</p>
+                            </label>
+                            <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept="video/*" />
+                             
+                             <div className="flex justify-center items-center gap-8 my-8">
+                                 <div>
+                                     <label className="mr-2 font-medium">Target Language:</label>
+                                     <select value={language} onChange={e => setLanguage(e.target.value)} className="p-2 border border-gray-300 rounded-lg">
+                                         <option value="es">Spanish</option>
+                                         <option value="fr">French</option>
+                                         <option value="de">German</option>
+                                         <option value="hi">Hindi</option>
+                                         <option value="ja">Japanese</option>
+                                     </select>
+                                 </div>
+                                 <div className="flex items-center">
+                                     <label className="mr-2 font-medium">Add Subtitles:</label>
+                                     <input type="checkbox" checked={subtitles} onChange={e => setSubtitles(e.target.checked)} className="h-5 w-5 accent-black"/>
+                                 </div>
+                             </div>
+                             <button 
+                                className="w-full max-w-md py-3 primary-button rounded-lg font-bold text-lg" 
+                                onClick={handleGenerate}
+                                disabled={isProcessing}
+                             >
+                                {isProcessing ? 'Processing...' : 'Upload & Process Video'}
+                            </button>
+                         </div>
+                     </main>
+                     <footer className="w-full p-4 border-t border-gray-200 text-center text-sm text-gray-600">
+                        <strong>Status:</strong> {status}
+                    </footer>
+                </div>
+            );
+        };
+        
+        // Directly render the Uploader component
+        ReactDOM.createRoot(document.getElementById('root')).render(<Uploader />);
+
+    </script>
+</body>
+</html>
+

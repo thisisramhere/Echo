@@ -1,0 +1,3 @@
+- [x] Add logging import and setup in api.py
+- [x] Add Request import from fastapi
+- [x] Add /welcome GET endpoint that logs request method and path, returns welcome JSON

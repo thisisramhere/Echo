@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+moviepy
+torch
+transformers
+sentencepiece
+sacremoses
+gtts
+ffmpeg-python
+openai-whisper
+coqui-tts
+edge-tts
